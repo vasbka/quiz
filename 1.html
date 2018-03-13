@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html>
+  <meta charset="UTF-8">
+<script type="text/javascript" src="jquery-3.3.1.min.js"></script>
+<script type="text/javascript" src="data.json"></script>
+<style type="text/css">
+	body{
+		background: url("biology.jpg");
+		background-size: cover;
+		transition: 0.4s;
+		font-size: 22px;
+	}
+	.title{
+		font-size: 52px;
+		text-align: center;
+		font-weight: bold;
+	}
+	.subject{
+		width: 20%;
+		display: inline-block;
+	    transition: 0.4s;
+	    border-radius: 5px;
+	    text-align: center;
+	    background-color: #b1b1b1;
+	    font-size: 25px;
+	    padding: 5px;
+	    margin: 5px;
+	    font-weight: bold;
+	}
+	.subject:hover{
+		/* background-color: #030099; */
+		cursor: pointer;
+		border-radius: 25px;
+		/* color: #fff; */
+	}
+
+	#questions{
+		display: none;
+		margin-bottom : 10px;
+	}
+
+	.question{
+	    background-color: #b1b1b1;
+	    color: #fff;
+	    padding: 15px;
+	    display: inline-block;
+		margin: 10px 5px;
+		transition: 0.4s;
+	}
+	.choice{
+		border: 3px solid red;
+	}
+	.question:hover{
+		border-radius: 15px;
+		cursor: pointer;
+	}
+
+	#material{
+		text-align:center;
+		display: none;
+	}
+	#material img{
+		height: 450px;
+	}
+
+	#answers{
+		text-align: center;
+	}
+	.answer{
+	    width: 20%;
+	    background-color: #b1b1b1;
+	    color: #fff;
+	    padding: 15px;
+	    display: inline-block;
+		margin: 10px 20px;
+	}
+	.answer:hover{
+		cursor: pointer;
+	}
+	.points{
+		text-align: center;
+	}
+	.points .point{
+		display: inline-block;
+		font-size: 60px;
+		width: 30%;
+    	transition: 0.5s;
+	}
+	.points .current{
+		font-weight: bold;border: 3px solid;
+	}
+	.red{
+		color: red;
+	}
+	.green{
+		color: green;
+	}
+	.blue{
+		color: blue;
+	}
+	.right {
+		background: #00dc00 !important;
+	}
+	video{
+		width: 60%;
+	}
+</style>
+
+
+<script type="text/javascript">
+	var mydata = JSON.parse(data);
+	var team = 0;
+	var red = 0, blue = 0; green = 0;
+	var arr = [];
+	var counterQuestion = 0;
+
+	function choiceAnswerByIndex(i, elem){
+
+		elem.style.backgroundColor = "orange";
+		arr[$(".subject.current").text()].push($(".question.choice").attr("data-counter-question"));
+		
+
+		if(document.getElementsByClassName('answer')[i].getAttribute('right')){
+			console.log(document.getElementsByClassName('answer')[i].getAttribute('right'));
+			if(team == 0)
+				red++;
+			if(team == 1)
+				blue++;
+			if(team == 2)
+				green++;
+		}
+		setTimeout(function(){
+			for(var j = 0; j <document.getElementsByClassName('answer').length; j++){
+				if(document.getElementsByClassName('answer')[j].getAttribute('right')){
+					document.getElementsByClassName('answer')[j].setAttribute("class", "answer right");
+				}
+			}
+
+			//next team active
+
+			$(".red")[0].innerHTML = red;
+			$(".blue")[0].innerHTML = blue;
+			$(".green")[0].innerHTML = green;
+			if(team == 0){
+				$(".red")[0].setAttribute("class", "point red");
+				$(".blue")[0].setAttribute("class", "point blue current");
+			}
+			if(team == 1){
+				$(".blue")[0].setAttribute("class", "point blue");
+				$(".green")[0].setAttribute("class", "point green current");
+			}
+			if(team == 2){
+				$(".green")[0].setAttribute("class", "point green");
+				$(".red")[0].setAttribute("class", "point red current");
+			}
+			team++;
+			if(team == 3)
+				team = 0;
+
+			setTimeout(function(){
+				$("#questions").fadeOut(600);
+				$("#answers").fadeOut(600);
+				$("#material").fadeOut(600);
+				document.getElementsByTagName("video")[0].pause();
+				for(var i = 0; i < mydata["subjects"].length; i++){
+					if($(".subject.current").text() == decodeURIComponent(mydata['subjects'][i]['name']) 
+									&& arr[$(".subject.current").text()].length == mydata['subjects'][i]['questions'].length) {
+						$(".subject.current").css("display", "none");
+					}
+				}
+			}, 1500);
+
+		}, 1500);
+	}
+
+
+	function showAnswerByQuestionIndex(i, j){
+		for(var k = 0; k < document.getElementsByClassName("question").length; k++){
+			document.getElementsByClassName("question")[k].setAttribute("class","question");
+		}
+		document.getElementsByClassName("question")[j].setAttribute("class","question choice");
+		
+		$("#answers").fadeOut(600);
+		$("#material").fadeOut(600);
+		setTimeout(function (){
+			$("#answers").empty();
+			$("#material").empty();
+			if(mydata['subjects'][i]['questions'][j]['material']){
+				var nd;
+				console.log(mydata['subjects'][i]['questions'][j]['material']['type']);
+				if(mydata['subjects'][i]['questions'][j]['material']['type'].valueOf() == 'photo'.valueOf()){
+					nd = document.createElement("img");
+					nd.src = mydata['subjects'][i]['questions'][j]['material']['src'];
+				}
+				if(mydata['subjects'][i]['questions'][j]['material']['type'].valueOf() == 'video'.valueOf()){
+					nd = document.createElement('video');
+					nd.src = mydata['subjects'][i]['questions'][j]['material']['src'];
+					nd.controls = true;
+				}
+				$("#material").append(nd);
+			}
+			for(var k = 0; k < mydata['subjects'][i]['questions'][j]['answers'].length; k++){
+				var nd = document.createElement("div");
+				nd.setAttribute("class", "answer");
+				nd.innerHTML = mydata['subjects'][i]['questions'][j]['answers'][k]['answer'];
+				if(mydata['subjects'][i]['questions'][j]['answers'][k]['right'])
+					nd.setAttribute("right", "true");
+				nd.setAttribute("onClick", "choiceAnswerByIndex(" + k + ", this)");
+				$("#questionsText").innerHTML = mydata['subjects'][i]['questions'][j]['question'];
+				$("#answers").append(nd);
+			}
+			$("#answers").fadeIn(300);
+			$("#material").fadeIn(300);
+			
+		}, 600);
+	}
+
+	function showQuestionsByCategoryI(j){
+		
+		for(var i = 0; i < document.getElementsByClassName("subject").length; i++){
+			document.getElementsByClassName("subject")[i].setAttribute("class", "subject");
+		}
+
+		if(j == 0)
+			document.body.style.backgroundImage = "url('human.jpg')";
+		if(j == 1)
+			document.body.style.backgroundImage = "url('bird.jpg')";
+		
+		document.getElementsByClassName("subject")[j].setAttribute("class", "subject current");
+
+		$("#questions").fadeOut(600);
+		$("#answers").fadeOut(600);
+		$("#material").fadeOut(600);
+		setTimeout( function(){
+			$("#questions").empty();
+			var title = document.createElement("div");
+			title.setAttribute("class","title");
+			title.innerHTML = "Питання: ";
+			$("#questions").append(title);
+			for(var i = 0; i < mydata["subjects"][j]["questions"].length; i++){
+				var nd = document.createElement("div");
+				nd.setAttribute("class", "question");
+				nd.setAttribute("data-counter-question", i);
+				nd.innerHTML = decodeURIComponent(mydata['subjects'][j]['questions'][i]['question']);
+				nd.setAttribute("onClick", "showAnswerByQuestionIndex(" + j + ", " + i + ")");
+				if(arr[$(".subject.current").text()].includes(i + "")){
+					nd.style.display = "none";
+				}
+				$("#questions").append(nd);
+			}
+			$("#questions").fadeIn(300);
+		}, 600);
+	}
+
+	$( document ).ready(function() {
+		// console.log(mydata);
+		$(".red")[0].setAttribute("class", "point red current");
+		for(var i = 0; i < mydata["subjects"].length; i++){
+			// console.log(mydata['subject'][i]['category']);
+			var nd = document.createElement("div");
+			nd.setAttribute("class","subject");
+			nd.innerHTML = decodeURIComponent(mydata['subjects'][i]['name']);
+			$("#subjects").append(nd);
+		}
+		var subjects = document.getElementsByClassName("subject");
+		for(var i = 0; i < subjects.length; i++){
+			arr[document.getElementsByClassName("subject")[i].innerHTML] = [];
+			subjects[i].setAttribute("onClicK", "showQuestionsByCategoryI("+i+")");
+
+		}
+	});
+
+</script>
+<head>
+	<title></title>
+</head>
+<body>
+	<div class="points">
+		<div class="point red">0</div>
+		<div class="point blue">0</div>
+		<div class="point green">0</div>
+	</div>
+<div class="title">Теми: </div>
+<div id="subjects"></div>
+
+<div id="questions">
+	<div class="title">Питання:</div>
+</div>
+
+<div id="material"></div>
+<div id="answers"> 
+</div>
+
+</body>
+
+
+</html>
